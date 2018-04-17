@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "inc/handle_file.h"
-#include "inc/escola.h"
+// #include "inc/escola.h"
+
+// Constantes de pré-processamento
+#define IN_DISK_REG_SIZE 87
+#define IN_DISK_HEADER_SIZE 5
 
 typedef struct t_header
 {
@@ -10,20 +14,20 @@ typedef struct t_header
 	char status;
 } HEADER;
 
-int file_read_csv_write_binary(const char *nome_arquivo, const char *binary_file)
+void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq_binario)
 {
-	if(nome_arquivo != NULL)
+	if(nome_arq_dados != NULL)
 	{
 		int codigo = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0, total_bytes = 0;
 		char byte_padding = 0x00, prestadora[10], data[11], escola[50], cidade[70], uf[3];
-		HEADER binary_h;
-		FILE *csv = NULL, *binary = NULL;
-		binary_h.topoPilha = -1;
-		binary_h.status = '0';
-		csv = fopen(nome_arquivo, "r");
-		binary = fopen(binary_file, "wb");
-		fwrite(&binary_h.status, sizeof(binary_h.status), 1, binary);
-		fwrite(&binary_h.topoPilha, sizeof(binary_h.topoPilha), 1, binary);
+		HEADER binario_h;
+		FILE *csv = NULL, *binario = NULL;
+		binario_h.topoPilha = -1;
+		binario_h.status = '0';
+		csv = fopen(nome_arq_dados, "r");
+		binario = fopen(nome_arq_binario, "wb");
+		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+		fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 		while(1)
 		{
 			if(feof(csv) != 0)
@@ -36,30 +40,132 @@ int file_read_csv_write_binary(const char *nome_arquivo, const char *binary_file
 				escola_size = strlen(escola);
 				cidade_size = strlen(cidade);
 				prestadora_size = strlen(prestadora);
-				fwrite(&codigo, sizeof(codigo), 1, binary);
-				fwrite(&data, strlen(data), 1, binary);
-				fwrite(&uf, strlen(uf), 1, binary);
-				fwrite(&escola_size, sizeof(escola_size), 1, binary);
-				fwrite(&escola, escola_size, 1, binary);
-				fwrite(&cidade_size, sizeof(cidade_size), 1, binary);
-				fwrite(&cidade, cidade_size, 1, binary);
-				fwrite(&prestadora_size, sizeof(prestadora_size), 1, binary);
-				fwrite(&prestadora, prestadora_size, 1, binary);
+				fwrite(&codigo, sizeof(codigo), 1, binario);
+				fwrite(&data, strlen(data), 1, binario);
+				fwrite(&uf, strlen(uf), 1, binario);
+				fwrite(&escola_size, sizeof(escola_size), 1, binario);
+				fwrite(&escola, escola_size, 1, binario);
+				fwrite(&cidade_size, sizeof(cidade_size), 1, binario);
+				fwrite(&cidade, cidade_size, 1, binario);
+				fwrite(&prestadora_size, sizeof(prestadora_size), 1, binario);
+				fwrite(&prestadora, prestadora_size, 1, binario);
 				total_bytes = escola_size + cidade_size + prestadora_size + sizeof(codigo) + strlen(uf) + strlen(data) + 12;
 				if(total_bytes < 87)
 				{
-					fwrite(&byte_padding, (87 - total_bytes), 1, binary);
+					fwrite(&byte_padding, (87 - total_bytes), 1, binario);
 				}
 			}
 		}
-		rewind(binary);
-		binary_h.status = '1';
-		fwrite(&binary_h.status, sizeof(binary_h.status), 1, binary);
-		fclose(binary);
+		rewind(binario);
+		binario_h.status = '1';
+		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+		fclose(binario);
 		fclose(csv);
+		printf("Arquivo carregado.\n");
 	}
 	else
 	{
-		printf("Falha no carregamento do arquivo\n");
+		printf("Falha no carregamento do arquivo.\n");
+	}
+}
+
+ESCOLA *file_read_all_binary(const char *nome_arq_binario)
+{
+	ESCOLA *e = NULL;
+	if(nome_arq_binario != NULL)
+	{
+
+	}
+	return e;
+}
+
+ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
+{
+	ESCOLA *e = NULL;
+	if(nome_arq_binario != NULL)
+	{
+		FILE *binario = NULL;
+		HEADER binario_h;
+		binario_h.status = '0';
+		int campos_variaveis_size = 0, codigoINEP = 0;
+		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
+		binario = fopen(nome_arq_binario, "rb");
+		if(binario != NULL)
+		{
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + IN_DISK_HEADER_SIZE, SEEK_CUR);
+			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0)
+			{
+				fread(data, (sizeof(data) - 1), 1, binario);
+				fread(uf, (sizeof(uf) - 1), 1, binario);
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				fread(escola, campos_variaveis_size, 1, binario);
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				fread(cidade, campos_variaveis_size, 1, binario);
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				fread(prestadora, campos_variaveis_size, 1, binario);
+				printf("%d %s %s %d %s %d %s %d %s\n", codigoINEP, data, uf, strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
+			}
+			else
+			{
+				printf("Registro inexistente.\n");
+			}
+			rewind(binario);
+			binario_h.status = '1';
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fclose(binario);
+		}
+		else
+		{
+			printf("Falha no processamento do arquivo.\n");
+		}
+	}
+	else
+	{
+		printf("Falha no processamento do arquivo.\n");
+	}
+	return e;
+}
+
+void file_delete_record(const char *nome_arq_binario, int rrn)
+{
+	if(nome_arq_binario != NULL)
+	{
+		HEADER binario_h;
+		FILE *binario = NULL;
+		char marca = '*';
+		int codigoINEP = 0;
+		binario = fopen(nome_arq_binario, "r+b");
+		if(binario != NULL)
+		{
+			binario_h.status = '0';
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			fseek(binario, (rrn - 1) * IN_DISK_REG_SIZE, SEEK_CUR);
+			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0)
+			{
+				fseek(binario, -sizeof(codigoINEP), SEEK_CUR);
+				fwrite(&marca, sizeof(marca), 1, binario);
+				fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+				binario_h.topoPilha = rrn;
+			}
+			else
+			{
+				printf("Registro inexistente.\n");
+			}
+			binario_h.status = '1';
+			rewind(binario);
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			fclose(binario);
+		}
+		else
+		{
+			printf("Falha no processamento do arquivo.\n");
+		}
+	}
+	else
+	{
+		printf("Falha no processamento do arquivo.\n");
 	}
 }
