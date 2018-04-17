@@ -52,7 +52,7 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				++tokken;
 				if(tokken[0] == ';')
 				{
-					memset(data, 0x08, 10);
+					memset(data, -1, 10);
 				}
 				else
 				{
@@ -89,7 +89,7 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				++tokken;
 				if(tokken[0] == '\n')
 				{
-					memset(data, 0x08, 2);
+					memset(data, -1, 2);
 				}
 				else
 				{
@@ -160,7 +160,16 @@ ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 				fread(cidade, campos_variaveis_size, 1, binario);
 				fread(&campos_variaveis_size, sizeof(int), 1, binario);
 				fread(prestadora, campos_variaveis_size, 1, binario);
-				printf("%d %s %s %d %s %d %s %d %s\n", codigoINEP, data, uf, strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
+				printf("%d ", codigoINEP);
+				if(data[0] != -1)
+				{
+					printf("%s ", data);
+				}
+				if(uf[0] != -1)
+				{
+					printf("%s ", uf);
+				}
+				printf("%d %s %d %s %d %s\n", strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
 			}
 			else
 			{
