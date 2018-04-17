@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "inc/handle_file.h"
-// #include "inc/escola.h"
 
 // Constantes de pré-processamento
 #define IN_DISK_REG_SIZE 87
@@ -19,7 +18,7 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 	if(nome_arq_dados != NULL)
 	{
 		int codigo = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0, total_bytes = 0;
-		char byte_padding = 0x00, prestadora[10], data[11], escola[50], cidade[70], uf[3];
+		char byte_padding = 0x00, prestadora[10], data[11], escola[50], cidade[70], uf[3], line[300], *tokken = NULL;
 		HEADER binario_h;
 		FILE *csv = NULL, *binario = NULL;
 		binario_h.topoPilha = -1;
@@ -36,10 +35,67 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 			}
 			else
 			{
-				fscanf(csv, "%10[^;];%10[^;]; %d ;%50[^;];%70[^;];%s\n", prestadora, data, &codigo, escola, cidade, uf);
-				escola_size = strlen(escola);
-				cidade_size = strlen(cidade);
-				prestadora_size = strlen(prestadora);
+				// fscanf(csv, "%10[^;];%10[^;]; %d ;%50[^;];%70[^;];%s\n", prestadora, data, &codigo, escola, cidade, uf);
+				fgets(line, sizeof(line), csv);
+				fscanf(csv, "*\n");
+				if(line[0] == ';')
+				{
+					memset(prestadora, 0, sizeof(prestadora));
+					prestadora_size = 0;
+				}
+				else
+				{
+					sscanf(line, "%10[^;]", prestadora);
+					prestadora_size = strlen(prestadora);
+				}
+				tokken = strstr(line, ";");
+				++tokken;
+				if(tokken[0] == ';')
+				{
+					memset(data, 0x08, 10);
+				}
+				else
+				{
+					sscanf(tokken, "%10[^;]", data);
+				}
+				tokken = strstr(tokken, ";");
+				++tokken;
+				sscanf(tokken, "%d", &codigo);
+				tokken = strstr(tokken, ";");
+				++tokken;
+				if(tokken[0] == ';')
+				{
+					memset(escola, 0, sizeof(escola));
+					escola_size = 0;
+				}
+				else
+				{
+					sscanf(tokken, "%50[^;\n]", escola);
+					escola_size = strlen(escola);
+				}
+				tokken = strstr(tokken, ";");
+				++tokken;
+				if(tokken[0] == ';')
+				{
+					memset(cidade, 0, sizeof(cidade));
+					cidade_size = 0;
+				}
+				else
+				{
+					sscanf(tokken, "%70[^;\n]", cidade);
+					cidade_size = strlen(cidade);
+				}
+				tokken = strstr(tokken, ";");
+				++tokken;
+				if(tokken[0] == '\n')
+				{
+					memset(data, 0x08, 2);
+				}
+				else
+				{
+					sscanf(tokken, "%2s\n", uf);
+				}
+				// printf("%s;%s;%d;%s;%s;%s\n", prestadora, data, codigo, escola, cidade, uf);
 				fwrite(&codigo, sizeof(codigo), 1, binario);
 				fwrite(&data, strlen(data), 1, binario);
 				fwrite(&uf, strlen(uf), 1, binario);
@@ -152,6 +208,46 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 			else
 			{
 				printf("Registro inexistente.\n");
+			}
+			binario_h.status = '1';
+			rewind(binario);
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			fclose(binario);
+		}
+		else
+		{
+			printf("Falha no processamento do arquivo.\n");
+		}
+	}
+	else
+	{
+		printf("Falha no processamento do arquivo.\n");
+	}
+}
+
+void file_print_stack(const char *nome_arq_binario)
+{
+	if(nome_arq_binario != NULL)
+	{
+		HEADER binario_h;
+		FILE *binario = NULL;
+		int tmp_pilha = -1;
+		char marca = 0x00;
+		binario = fopen(nome_arq_binario, "r+b");
+		if(binario != NULL)
+		{
+			binario_h.status = '0';
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			tmp_pilha = binario_h.topoPilha;
+			while(tmp_pilha != -1)
+			{
+				printf("%d ", tmp_pilha);
+				// rewind(binario);
+				fseek(binario, ((tmp_pilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE, SEEK_SET);
+				fread(&marca, sizeof(marca), 1, binario);
+				fread(&tmp_pilha, sizeof(tmp_pilha), 1, binario);
 			}
 			binario_h.status = '1';
 			rewind(binario);
