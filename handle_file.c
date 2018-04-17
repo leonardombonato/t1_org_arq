@@ -14,8 +14,8 @@ int file_read_csv_write_binary(const char *nome_arquivo, const char *binary_file
 {
 	if(nome_arquivo != NULL)
 	{
-		int codigo = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0;
-		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
+		int codigo = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0, total_bytes = 0;
+		char byte_padding = 0x00, prestadora[10], data[11], escola[50], cidade[70], uf[3];
 		HEADER binary_h;
 		FILE *csv = NULL, *binary = NULL;
 		binary_h.topoPilha = -1;
@@ -45,7 +45,11 @@ int file_read_csv_write_binary(const char *nome_arquivo, const char *binary_file
 				fwrite(&cidade, cidade_size, 1, binary);
 				fwrite(&prestadora_size, sizeof(prestadora_size), 1, binary);
 				fwrite(&prestadora, prestadora_size, 1, binary);
-				printf("%s %s %d %s %s %s\n", prestadora, data, codigo, escola, cidade, uf);
+				total_bytes = escola_size + cidade_size + prestadora_size + sizeof(codigo) + strlen(uf) + strlen(data) + 12;
+				if(total_bytes < 87)
+				{
+					fwrite(&byte_padding, (87 - total_bytes), 1, binary);
+				}
 			}
 		}
 		rewind(binary);
