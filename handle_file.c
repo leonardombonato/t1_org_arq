@@ -35,7 +35,6 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 			}
 			else
 			{
-				// fscanf(csv, "%10[^;];%10[^;]; %d ;%50[^;];%70[^;];%s\n", prestadora, data, &codigo, escola, cidade, uf);
 				fgets(line, sizeof(line), csv);
 				fscanf(csv, "*\n");
 				if(line[0] == ';')
@@ -95,7 +94,6 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				{
 					sscanf(tokken, "%2s\n", uf);
 				}
-				// printf("%s;%s;%d;%s;%s;%s\n", prestadora, data, codigo, escola, cidade, uf);
 				fwrite(&codigo, sizeof(codigo), 1, binario);
 				fwrite(&data, strlen(data), 1, binario);
 				fwrite(&uf, strlen(uf), 1, binario);
@@ -218,6 +216,53 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 			{
 				printf("Registro inexistente.\n");
 			}
+			binario_h.status = '1';
+			rewind(binario);
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			fclose(binario);
+		}
+		else
+		{
+			printf("Falha no processamento do arquivo.\n");
+		}
+	}
+	else
+	{
+		printf("Falha no processamento do arquivo.\n");
+	}
+}
+
+void file_print_stack(const char *nome_arq_binario)
+{
+	if(nome_arq_binario != NULL)
+	{
+		HEADER binario_h;
+		FILE *binario = NULL;
+		int tmp_pilha = -1;
+		char marca = 0x00;
+		binario = fopen(nome_arq_binario, "r+b");
+		if(binario != NULL)
+		{
+			binario_h.status = '0';
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			tmp_pilha = binario_h.topoPilha;
+			if(tmp_pilha != -1)
+			{
+				while(tmp_pilha != -1)
+				{
+					printf("%d ", tmp_pilha);
+					fseek(binario, ((tmp_pilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE, SEEK_SET);
+					fread(&marca, sizeof(marca), 1, binario);
+					fread(&tmp_pilha, sizeof(tmp_pilha), 1, binario);
+				}
+			}
+			else
+			{
+				printf("Pilha vazia.");
+			}
+			printf("\n");
 			binario_h.status = '1';
 			rewind(binario);
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
