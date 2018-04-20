@@ -1,7 +1,7 @@
 /*
 	Nome: Andre Luis Storino Junior, N USP: 9293668
-	Nome: Francisco, Nº USP:
-	Nome: Leonardo, Nº USP:
+	Nome: Francisco, N USP:
+	Nome: Leonardo, N USP:
 	Nome: Paulo Ricardo J. Miranda, N USP: 10133456
 */
 #include <stdlib.h>
