@@ -196,8 +196,7 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 	{
 		HEADER binario_h;
 		FILE *binario = NULL;
-		char marca = '*';
-		int codigoINEP = 0;
+		int codigoINEP = 0, marca = -1;
 		binario = fopen(nome_arq_binario, "r+b");
 		if(binario != NULL)
 		{
