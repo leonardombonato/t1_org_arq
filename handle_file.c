@@ -272,8 +272,7 @@ void file_print_stack(const char *nome_arq_binario)
 	{
 		HEADER binario_h;
 		FILE *binario = NULL;
-		int tmp_pilha = -1;
-		char marca = 0x00;
+		int tmp_pilha = -1, marca = -1;
 		binario = fopen(nome_arq_binario, "r+b");
 		if(binario != NULL)
 		{
