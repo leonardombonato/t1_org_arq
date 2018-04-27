@@ -17,8 +17,8 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 {
 	if(nome_arq_dados != NULL)
 	{
-		int codigo = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0, total_bytes = 0;
-		char byte_padding = 0x00, prestadora[10], data[11], escola[50], cidade[70], uf[3], line[300], *tokken = NULL;
+		int codigoINEP = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0, total_bytes = 0;
+		char byte_padding = '0', prestadora[10], data[11], escola[50], cidade[70], uf[3], line[300], *tokken = NULL;
 		HEADER binario_h;
 		FILE *csv = NULL, *binario = NULL;
 		binario_h.topoPilha = -1;
@@ -29,85 +29,94 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 		fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 		while(1)
 		{
-			if(feof(csv) != 0)
+			strcpy(uf, "00");
+			strcpy(data, "0000000000");
+			strcpy(escola, "");
+			strcpy(cidade, "");
+			strcpy(prestadora, "");
+			fgets(line, sizeof(line), csv);
+			tokken = line;
+			if(feof(csv) == 0) // Se o fim do arquivo nao foi setado
 			{
-				break;
+				if(tokken[0] != ';')
+				{
+					sscanf(tokken, " %10[^;]", prestadora);
+					printf("%s ", prestadora);
+					prestadora_size = strlen(prestadora);
+					tokken = strchr(tokken, ';');
+				}
+				else
+				{
+					prestadora_size = 0;
+				}
+				++tokken;
+				if(tokken[0] != ';')
+				{
+					sscanf(tokken, " %10[^;]", data);
+					tokken = strchr(tokken, ';');
+				}
+				printf("%s ", data);
+				++tokken;
+				sscanf(tokken, "%d", &codigoINEP);
+				printf("%d ", codigoINEP);
+				tokken = strchr(tokken, ';');
+				++tokken;
+				if(tokken[0] != ';')
+				{
+					sscanf(tokken, " %50[^;\n]", escola);
+					printf("%s ", escola);
+					escola_size = strlen(escola);
+					tokken = strchr(tokken, ';');
+				}
+				else
+				{
+					escola_size = 0;
+				}
+				++tokken;
+				if(tokken[0] != ';')
+				{
+					sscanf(tokken, " %70[^;\n]", cidade);
+					printf("%s ", cidade);
+					cidade_size = strlen(cidade);
+					tokken = strchr(tokken, ';');
+				}
+				else
+				{
+					cidade_size = 0;
+				}
+				++tokken;
+				if(tokken[0] != ';')
+				{
+					sscanf(tokken, " %s", uf);
+					printf("%s\n", uf);
+				}
+				fwrite(&codigoINEP, sizeof(codigoINEP), 1, binario);
+				fwrite(data, strlen(data), 1, binario);
+				fwrite(uf, strlen(uf), 1, binario);
+				fwrite(&escola_size, sizeof(int), 1, binario);
+				if(escola_size > 0)
+				{
+					fwrite(escola, escola_size, 1, binario);
+				}
+				fwrite(&cidade_size, sizeof(int), 1, binario);
+				if(cidade_size > 0)
+				{
+					fwrite(cidade, cidade_size, 1, binario);
+				}
+				fwrite(&prestadora_size, sizeof(int), 1, binario);
+				if(prestadora_size > 0)
+				{
+					fwrite(prestadora, prestadora_size, 1, binario);
+				}
+				total_bytes = 28 + escola_size + prestadora_size + cidade_size;
+				if(total_bytes < IN_DISK_REG_SIZE)
+				{
+					fwrite(&byte_padding, (IN_DISK_REG_SIZE - total_bytes), 1, binario);
+				}
 			}
 			else
 			{
-				fgets(line, sizeof(line), csv);
-				fscanf(csv, "*\n");
-				if(line[0] == ';')
-				{
-					memset(prestadora, 0, sizeof(prestadora));
-					prestadora_size = 0;
-				}
-				else
-				{
-					sscanf(line, "%10[^;]", prestadora);
-					prestadora_size = strlen(prestadora);
-				}
-				tokken = strstr(line, ";");
-				++tokken;
-				if(tokken[0] == ';')
-				{
-					memset(data, -1, 10);
-				}
-				else
-				{
-					sscanf(tokken, "%10[^;]", data);
-				}
-				tokken = strstr(tokken, ";");
-				++tokken;
-				sscanf(tokken, "%d", &codigo);
-				tokken = strstr(tokken, ";");
-				++tokken;
-				if(tokken[0] == ';')
-				{
-					memset(escola, 0, sizeof(escola));
-					escola_size = 0;
-				}
-				else
-				{
-					sscanf(tokken, "%50[^;\n]", escola);
-					escola_size = strlen(escola);
-				}
-				tokken = strstr(tokken, ";");
-				++tokken;
-				if(tokken[0] == ';')
-				{
-					memset(cidade, 0, sizeof(cidade));
-					cidade_size = 0;
-				}
-				else
-				{
-					sscanf(tokken, "%70[^;\n]", cidade);
-					cidade_size = strlen(cidade);
-				}
-				tokken = strstr(tokken, ";");
-				++tokken;
-				if(tokken[0] == '\n')
-				{
-					memset(data, -1, 2);
-				}
-				else
-				{
-					sscanf(tokken, "%2s\n", uf);
-				}
-				fwrite(&codigo, sizeof(codigo), 1, binario);
-				fwrite(&data, strlen(data), 1, binario);
-				fwrite(&uf, strlen(uf), 1, binario);
-				fwrite(&escola_size, sizeof(escola_size), 1, binario);
-				fwrite(&escola, escola_size, 1, binario);
-				fwrite(&cidade_size, sizeof(cidade_size), 1, binario);
-				fwrite(&cidade, cidade_size, 1, binario);
-				fwrite(&prestadora_size, sizeof(prestadora_size), 1, binario);
-				fwrite(&prestadora, prestadora_size, 1, binario);
-				total_bytes = escola_size + cidade_size + prestadora_size + sizeof(codigo) + strlen(uf) + strlen(data) + 12;
-				if(total_bytes < 87)
-				{
-					fwrite(&byte_padding, (87 - total_bytes), 1, binario);
-				}
+				break;
 			}
 		}
 		rewind(binario);
@@ -143,31 +152,56 @@ ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 		binario_h.status = '0';
 		int campos_variaveis_size = 0, codigoINEP = 0;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
-		binario = fopen(nome_arq_binario, "rb");
+		memset(prestadora, 0x00, sizeof(prestadora));
+		memset(prestadora, 0x00, sizeof(escola));
+		memset(prestadora, 0x00, sizeof(cidade));
+		binario = fopen(nome_arq_binario, "r+b");
 		if(binario != NULL)
 		{
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-			fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + IN_DISK_HEADER_SIZE, SEEK_CUR);
+			fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
 			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0)
 			{
-				fread(data, (sizeof(data) - 1), 1, binario);
-				fread(uf, (sizeof(uf) - 1), 1, binario);
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				fread(escola, campos_variaveis_size, 1, binario);
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				fread(cidade, campos_variaveis_size, 1, binario);
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				fread(prestadora, campos_variaveis_size, 1, binario);
-				printf("%d ", codigoINEP);
-				if(data[0] != -1)
+				if(codigoINEP != -1)
 				{
-					printf("%s ", data);
+					printf("%d ", codigoINEP);
+					fread(data, (sizeof(data) - 1), 1, binario);
+					if(data[0] != '0')
+					{
+						printf("%s ", data);
+					}
+					fread(uf, (sizeof(uf) - 1), 1, binario);
+					if(uf[0] != '0')
+					{
+						printf("%s ", uf);
+					}
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					printf("%d ", campos_variaveis_size);
+					if(campos_variaveis_size > 0)
+					{
+						fread(escola, campos_variaveis_size, 1, binario);
+						printf("%s ", escola);
+					}
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					printf("%d ", campos_variaveis_size);
+					if(campos_variaveis_size > 0)
+					{
+						fread(cidade, campos_variaveis_size, 1, binario);
+						printf("%s ", cidade);
+					}
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					printf("%d ", campos_variaveis_size);
+					if(campos_variaveis_size > 0)
+					{
+						fread(prestadora, campos_variaveis_size, 1, binario);
+						printf("%s", prestadora);
+					}
+					printf("\n");
 				}
-				if(uf[0] != -1)
+				else
 				{
-					printf("%s ", uf);
+					printf("Registro inexistente.\n");
 				}
-				printf("%d %s %d %s %d %s\n", strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
 			}
 			else
 			{
