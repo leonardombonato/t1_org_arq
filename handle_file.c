@@ -41,7 +41,6 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				if(tokken[0] != ';')
 				{
 					sscanf(tokken, " %10[^;]", prestadora);
-					printf("%s ", prestadora);
 					prestadora_size = strlen(prestadora);
 					tokken = strchr(tokken, ';');
 				}
@@ -55,16 +54,13 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 					sscanf(tokken, " %10[^;]", data);
 					tokken = strchr(tokken, ';');
 				}
-				printf("%s ", data);
 				++tokken;
 				sscanf(tokken, "%d", &codigoINEP);
-				printf("%d ", codigoINEP);
 				tokken = strchr(tokken, ';');
 				++tokken;
 				if(tokken[0] != ';')
 				{
 					sscanf(tokken, " %50[^;\n]", escola);
-					printf("%s ", escola);
 					escola_size = strlen(escola);
 					tokken = strchr(tokken, ';');
 				}
@@ -76,7 +72,6 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				if(tokken[0] != ';')
 				{
 					sscanf(tokken, " %70[^;\n]", cidade);
-					printf("%s ", cidade);
 					cidade_size = strlen(cidade);
 					tokken = strchr(tokken, ';');
 				}
@@ -88,7 +83,6 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				if(tokken[0] != ';')
 				{
 					sscanf(tokken, " %s", uf);
-					printf("%s\n", uf);
 				}
 				fwrite(&codigoINEP, sizeof(codigoINEP), 1, binario);
 				fwrite(data, strlen(data), 1, binario);
@@ -132,14 +126,67 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 	}
 }
 
-ESCOLA *file_read_all_binary(const char *nome_arq_binario)
-{
-	ESCOLA *e = NULL;
-	if(nome_arq_binario != NULL)
-	{
+void file_read_all_binary(const char *nome_arq_binario){
+	if(nome_arq_binario != NULL){
+		FILE *binario = fopen(nome_arq_binario, "r+b");
+		HEADER binario_h;
+		binario_h.status = '0';
+		int campos_variaveis_size = 0, codigoINEP = 0, reg_size = 28;
+		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 
+		if(binario == NULL) {
+			printf("Arquivo inexistente.");
+		}
+
+		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+		fseek(binario, (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
+
+		while(1) {
+			if(feof(binario) == 0)
+			{
+				fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
+				fread(data, (sizeof(data) - 1), 1, binario);
+				fread(uf, (sizeof(uf) - 1), 1, binario);
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				reg_size = reg_size + campos_variaveis_size;
+				fread(escola, campos_variaveis_size, 1, binario);
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				reg_size = reg_size + campos_variaveis_size;
+				fread(cidade, campos_variaveis_size, 1, binario);
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				reg_size = reg_size + campos_variaveis_size;
+				fread(prestadora, campos_variaveis_size, 1, binario);
+
+				printf("%d ", codigoINEP);
+				printf("%s ", data);
+				printf("%s ", uf);
+				printf("%d %s %d %s %d %s\n", strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
+
+				if(feof(binario) == 0)
+				{
+					if (reg_size < IN_DISK_REG_SIZE) {
+						fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
+					}
+				}
+				else
+				{
+					break;
+				}
+				reg_size = 28;
+			}
+			else
+			{
+				break;
+			}
+		}
+		rewind(binario);
+		binario_h.status = '1';
+		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+		fclose(binario);
 	}
-	return e;
+	else {
+		printf("Falha no processamento do arquivo.\n");
+	}
 }
 
 ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
