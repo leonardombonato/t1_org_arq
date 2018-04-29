@@ -18,7 +18,7 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 	if(nome_arq_dados != NULL)
 	{
 		int codigoINEP = 0, escola_size = 0, cidade_size = 0, prestadora_size = 0, total_bytes = 0;
-		char byte_padding = '0', prestadora[10], data[11], escola[50], cidade[70], uf[3], line[300], *tokken = NULL;
+		char byte_padding = '0', prestadora[10], data[11], escola[50], cidade[70], uf[3], line[300], *token = NULL;
 		HEADER binario_h;
 		FILE *csv = NULL, *binario = NULL;
 		binario_h.topoPilha = -1;
@@ -35,54 +35,54 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 			strcpy(cidade, "");
 			strcpy(prestadora, "");
 			fgets(line, sizeof(line), csv);
-			tokken = line;
+			token = line;
 			if(feof(csv) == 0) // Se o fim do arquivo nao foi setado
 			{
-				if(tokken[0] != ';')
+				if(token[0] != ';')
 				{
-					sscanf(tokken, " %10[^;]", prestadora);
+					sscanf(token, " %10[^;]", prestadora);
 					prestadora_size = strlen(prestadora);
-					tokken = strchr(tokken, ';');
+					token = strchr(token, ';');
 				}
 				else
 				{
 					prestadora_size = 0;
 				}
-				++tokken;
-				if(tokken[0] != ';')
+				++token;
+				if(token[0] != ';')
 				{
-					sscanf(tokken, " %10[^;]", data);
-					tokken = strchr(tokken, ';');
+					sscanf(token, " %10[^;]", data);
+					token = strchr(token, ';');
 				}
-				++tokken;
-				sscanf(tokken, "%d", &codigoINEP);
-				tokken = strchr(tokken, ';');
-				++tokken;
-				if(tokken[0] != ';')
+				++token;
+				sscanf(token, "%d", &codigoINEP);
+				token = strchr(token, ';');
+				++token;
+				if(token[0] != ';')
 				{
-					sscanf(tokken, " %50[^;\n]", escola);
+					sscanf(token, " %50[^;\n]", escola);
 					escola_size = strlen(escola);
-					tokken = strchr(tokken, ';');
+					token = strchr(token, ';');
 				}
 				else
 				{
 					escola_size = 0;
 				}
-				++tokken;
-				if(tokken[0] != ';')
+				++token;
+				if(token[0] != ';')
 				{
-					sscanf(tokken, " %70[^;\n]", cidade);
+					sscanf(token, " %70[^;\n]", cidade);
 					cidade_size = strlen(cidade);
-					tokken = strchr(tokken, ';');
+					token = strchr(token, ';');
 				}
 				else
 				{
 					cidade_size = 0;
 				}
-				++tokken;
-				if(tokken[0] != ';')
+				++token;
+				if(token[0] != ';')
 				{
-					sscanf(tokken, " %s", uf);
+					sscanf(token, " %s", uf);
 				}
 				fwrite(&codigoINEP, sizeof(codigoINEP), 1, binario);
 				fwrite(data, strlen(data), 1, binario);
@@ -105,7 +105,7 @@ void file_read_csv_write_binary(const char *nome_arq_dados, const char *nome_arq
 				total_bytes = 28 + escola_size + prestadora_size + cidade_size;
 				if(total_bytes < IN_DISK_REG_SIZE)
 				{
-					fwrite(&byte_padding, (IN_DISK_REG_SIZE - total_bytes), 1, binario);
+					fwrite(&byte_padding, sizeof(char), (IN_DISK_REG_SIZE - total_bytes), binario);
 				}
 			}
 			else
@@ -309,6 +309,50 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 	}
 	else
 	{
+		printf("Falha no processamento do arquivo.\n");
+	}
+}
+
+void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, char *newData, char *newUF, char *newEscola, char *newCidade, char *newPrestadora){
+	char status = '0', bytePadding = '0';
+	FILE *binario = NULL;
+	int campos_variaveis_size, isRemoved, regSize;
+	
+	binario = fopen(nome_arq_binario, "w+b);
+	if(binario != NULL){
+		fwrite(&status, sizeof(status), 1, binario);
+		fseek(binario, (IN_DIS_REG_SIZE * (rrn - 1)) + sizeof(int), SEEK_CUR);
+		if(fread(&isRemoved, sizeof(int), 1, binario) > 0){
+			if(isRemoved != -1){
+				fseek(binario, -sizeof(codigoINEP), SEEK_CUR);
+				regsize = 28;
+				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario));
+				fwrite(newData, (sizeof(newData) - 1), 1, binario);
+				fwrite(newUF, (sizeof(newUF) - 1), 1, binario);
+				campos_variaveis_size = strlen(newEscola);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newEscola, campos_variaveis_size, 1, binario);
+				campos_variaveis_size = strlen(newCidade);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newCidade, campos_variaveis_size, 1, binario);
+				campos_variaveis_size = strlen(newPrestadora);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newPrestadora, campos_variaveis_size, 1, binario);
+				if(regsize < 87) fwrite(&bytePadding, sizeof(char), IN_DISK_REG_SIZE - regsize, binario);
+				printf("Registro alterado com sucesso.\n);
+			}
+			else{
+				printf("Registro inexistente.\n");
+			}
+		}
+		rewind(binario);
+		fwrite(&status, sizeof(status), 1, binario);
+		fclose(binario);
+	}
+	else{
 		printf("Falha no processamento do arquivo.\n");
 	}
 }
