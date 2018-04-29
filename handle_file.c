@@ -189,9 +189,8 @@ void file_read_all_binary(const char *nome_arq_binario){
 	}
 }
 
-ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
+void file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 {
-	ESCOLA *e = NULL;
 	if(nome_arq_binario != NULL)
 	{
 		FILE *binario = NULL;
@@ -268,7 +267,6 @@ ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 	{
 		printf("Falha no processamento do arquivo.\n");
 	}
-	return e;
 }
 
 void file_delete_record(const char *nome_arq_binario, int rrn)
@@ -301,6 +299,7 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			fclose(binario);
+			printf("Registro removido com sucesso.\n");
 		}
 		else
 		{
