@@ -10,7 +10,7 @@
 #include "inc/escola.h"
 #include "inc/handle_file.h"
 
-#define FILE_NAME "arquivo.dat"
+#define FILE_NAME "arquivo.dat" //Nome do arquivo binario
 
 int main(int argc, char *argv[])
 {
@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
+				argv[2]++; //Ignorando abre aspas
+				argv[2][strlen(argv[2] - 1)] = '\0'; //Ignorando fecha aspas
 				file_read_csv_write_binary(argv[2], FILE_NAME);
 			}
 			break;
@@ -42,7 +44,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+				file_read_all_binary(FILE_NAME);
 			}
 			break;
 		case '3':	//Recuperacao de dados de registros que satisfacam um criterio de busca
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+				file_read_binary_rrn(FILE_NAME, atoi(argv[2]));
 			}
 			break;
 		case '5':	//Remocao de um registro por RRN (Relative Register Number)
@@ -72,7 +74,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+				file_delete_record(FILE_NAME, atoi(argv[2]));
 			}
 			break;
 		case '6':	//Insercao de um novo registro no arquivo de dados
@@ -112,7 +114,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+				file_print_stack(FILE_NAME);
 			}
 			break;
 		default:
