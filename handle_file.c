@@ -131,7 +131,7 @@ void file_read_all_binary(const char *nome_arq_binario){
 		FILE *binario = fopen(nome_arq_binario, "r+b");
 		HEADER binario_h;
 		binario_h.status = '0';
-		int campos_variaveis_size = 0, codigoINEP = 0, reg_size = 28;
+		int campos_variaveis_size = 0, codigoINEP, reg_size = 28;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 
 		if(binario == NULL) {
@@ -144,35 +144,40 @@ void file_read_all_binary(const char *nome_arq_binario){
 		while(1) {
 			if(feof(binario) == 0)
 			{
+				codigoINEP = 0;
 				fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
-				fread(data, (sizeof(data) - 1), 1, binario);
-				fread(uf, (sizeof(uf) - 1), 1, binario);
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				reg_size = reg_size + campos_variaveis_size;
-				fread(escola, campos_variaveis_size, 1, binario);
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				reg_size = reg_size + campos_variaveis_size;
-				fread(cidade, campos_variaveis_size, 1, binario);
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				reg_size = reg_size + campos_variaveis_size;
-				fread(prestadora, campos_variaveis_size, 1, binario);
+				if(codigoINEP != -1){
+					fread(data, (sizeof(data) - 1), 1, binario);
+					fread(uf, (sizeof(uf) - 1), 1, binario);
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					reg_size = reg_size + campos_variaveis_size;
+					fread(escola, campos_variaveis_size, 1, binario);
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					reg_size = reg_size + campos_variaveis_size;
+					fread(cidade, campos_variaveis_size, 1, binario);
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					reg_size = reg_size + campos_variaveis_size;
+					fread(prestadora, campos_variaveis_size, 1, binario);
 
-				printf("%d ", codigoINEP);
-				printf("%s ", data);
-				printf("%s ", uf);
-				printf("%d %s %d %s %d %s\n", strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
+					printf("%d ", codigoINEP);
+					printf("%s ", data);
+					printf("%s ", uf);
+					printf("%d %s %d %s %d %s\n", strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
 
-				if(feof(binario) == 0)
-				{
-					if (reg_size < IN_DISK_REG_SIZE) {
-						fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
+					if(feof(binario) == 0)
+					{
+						if (reg_size < IN_DISK_REG_SIZE) {
+							fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
+						}
 					}
+					else
+					{
+						break;
+					}
+					reg_size = 28;
+				else{
+					fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
 				}
-				else
-				{
-					break;
-				}
-				reg_size = 28;
 			}
 			else
 			{
@@ -200,8 +205,8 @@ ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 		int campos_variaveis_size = 0, codigoINEP = 0;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 		memset(prestadora, 0x00, sizeof(prestadora));
-		memset(prestadora, 0x00, sizeof(escola));
-		memset(prestadora, 0x00, sizeof(cidade));
+		memset(escola, 0x00, sizeof(escola));
+		memset(cidade, 0x00, sizeof(cidade));
 		binario = fopen(nome_arq_binario, "r+b");
 		if(binario != NULL)
 		{
@@ -213,12 +218,12 @@ ESCOLA *file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 				{
 					printf("%d ", codigoINEP);
 					fread(data, (sizeof(data) - 1), 1, binario);
-					if(data[0] != '0')
+					if(strcmp(data, "0000000000") != 0)
 					{
 						printf("%s ", data);
 					}
 					fread(uf, (sizeof(uf) - 1), 1, binario);
-					if(uf[0] != '0')
+					if(strcmp(uf, "00") != 0)
 					{
 						printf("%s ", uf);
 					}
