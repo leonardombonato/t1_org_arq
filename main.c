@@ -15,15 +15,15 @@
 int main(int argc, char *argv[])
 {
 	char op;	//Codigo da operacao a ser realizada
-	
-	if(argc < 2 || strlen(argv[1]) != 1 || (argv[1][0] >= '0' && argv[1][0] <= '9')) {
+
+	if(argc < 2 || strlen(argv[1]) != 1 || (argv[1][0] <= '0' && argv[1][0] > '9')) {
 		printf("Erro na entrada de parametros para o programa.\n");
 		printf("Uso: ./programaTrab1 CodOp[0-9] +parametros dependentes da operação\n");
 		printf("Verifique a documentacao externa para a especificacao de cada operacao\n");
 		exit(EXIT_FAILURE);
 	}
 	else op = argv[1][0];
-	
+
 	switch (op){
 		case '1':	//Leitura de registros de um arquivo .csv
 			if(argc != 3){
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+
 			}
 			break;
 		case '4':	//Busca de um registro por RRN (Relative Register Number)
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+
 			}
 			break;
 		case '7':	//Atualizacao dos campos de um registro existente no arquivo de dados
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+
 			}
 			break;
 		case '9':	//Recupera os RRNs da pilha de registros removidos
@@ -119,6 +119,6 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 			break;
 	}
-	
+
 	return 0;
 }
