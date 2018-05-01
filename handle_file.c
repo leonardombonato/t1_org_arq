@@ -322,7 +322,7 @@ void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, c
 	FILE *binario = NULL;
 	int campos_variaveis_size, isRemoved, regSize;
 	
-	binario = fopen(nome_arq_binario, "w+b);
+	binario = fopen(nome_arq_binario, "w+b");
 	if(binario != NULL){
 		fwrite(&status, sizeof(status), 1, binario);
 		fseek(binario, (IN_DIS_REG_SIZE * (rrn - 1)) + sizeof(int), SEEK_CUR);
@@ -348,7 +348,7 @@ void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, c
 				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
 				if(campos_variaveis_size > 0) fwrite(newPrestadora, campos_variaveis_size, 1, binario);
 				if(regsize < 87) fwrite(&bytePadding, sizeof(char), IN_DISK_REG_SIZE - regsize, binario);
-				printf("Registro alterado com sucesso.\n);
+				printf("Registro alterado com sucesso.\n");
 			}
 			else{
 				printf("Registro inexistente.\n");
