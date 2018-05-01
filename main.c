@@ -32,8 +32,6 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				argv[2]++; //Ignorando abre aspas
-				argv[2][strlen(argv[2] - 1)] = '\0'; //Ignorando fecha aspas
 				file_read_csv_write_binary(argv[2], FILE_NAME);
 			}
 			break;
@@ -94,7 +92,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-				
+				file_update_rrn(FILE_NAME, atoi(argv[2]), atoi(argv[3]), argv[4], argv[5], argv[6], argv[7], argv[8]);
 			}
 			break;
 		case '8':	//Desfragmentacao do arquivo de dados
