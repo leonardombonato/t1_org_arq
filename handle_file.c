@@ -334,17 +334,17 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, char *newData, char *newUF, char *newEscola, char *newCidade, char *newPrestadora){
 	char status = '0', bytePadding = '0';
 	FILE *binario = NULL;
-	int campos_variaveis_size, isRemoved, regSize;
+	int campos_variaveis_size, isRemoved, regsize;
 
 	binario = fopen(nome_arq_binario, "w+b");
 	if(binario != NULL){
 		fwrite(&status, sizeof(status), 1, binario);
-		fseek(binario, (IN_DIS_REG_SIZE * (rrn - 1)) + sizeof(int), SEEK_CUR);
+		fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + sizeof(int), SEEK_CUR);
 		if(fread(&isRemoved, sizeof(int), 1, binario) > 0){
 			if(isRemoved != -1){
-				fseek(binario, -sizeof(codigoINEP), SEEK_CUR);
+				fseek(binario, -sizeof(isRemoved), SEEK_CUR);
 				regsize = 28;
-				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario));
+				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario);
 				if(strcmp(newData, "0") == 0) fwrite("0000000000", sizeof(char), 10, binario);
 				else fwrite(newData, (sizeof(newData) - 1), 1, binario);
 				if(strcmp(newUF, "0") == 0) fwrite("00", sizeof(char), 2, binario);
