@@ -331,8 +331,10 @@ void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, c
 				fseek(binario, -sizeof(codigoINEP), SEEK_CUR);
 				regsize = 28;
 				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario));
-				fwrite(newData, (sizeof(newData) - 1), 1, binario);
-				fwrite(newUF, (sizeof(newUF) - 1), 1, binario);
+				if(strcmp(newData, "0") == 0) fwrite("0000000000", sizeof(char), 10, binario);
+				else fwrite(newData, (sizeof(newData) - 1), 1, binario);
+				if(strcmp(newUF, "0") == 0) fwrite("00", sizeof(char), 2, binario);
+				else fwrite(newUF, (sizeof(newUF) - 1), 1, binario);
 				campos_variaveis_size = strlen(newEscola);
 				regsize += campos_variaveis_size;
 				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
