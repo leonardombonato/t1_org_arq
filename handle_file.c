@@ -142,47 +142,61 @@ void file_read_all_binary(const char *nome_arq_binario){
 		fseek(binario, (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
 
 		while(1) {
+			memset(uf, 0x00, sizeof(uf));
+			memset(escola, 0x00, sizeof(escola));
+			memset(cidade, 0x00, sizeof(cidade));
+			memset(prestadora, 0x00, sizeof(prestadora));
+			fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
+			if(codigoINEP != -1){
+				printf("%d ", codigoINEP);
+				fread(data, (sizeof(data) - 1), 1, binario);
+				if(data[0] != '0')
+				{
+					printf("%s ", data);
+				}
+				fread(uf, (sizeof(uf) - 1), 1, binario);
+				if(uf[0] != '0')
+				{
+					printf("%s ", uf);
+				}
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				reg_size = reg_size + campos_variaveis_size;
+				fread(escola, campos_variaveis_size, 1, binario);
+				if(campos_variaveis_size > 0)
+				{
+					printf("%d %s ", campos_variaveis_size, escola);
+				}
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				reg_size = reg_size + campos_variaveis_size;
+				fread(cidade, campos_variaveis_size, 1, binario);
+				if(campos_variaveis_size > 0)
+				{
+					printf("%d %s ", campos_variaveis_size, cidade);
+				}
+				fread(&campos_variaveis_size, sizeof(int), 1, binario);
+				reg_size = reg_size + campos_variaveis_size;
+				fread(prestadora, campos_variaveis_size, 1, binario);
+				if(campos_variaveis_size > 0)
+				{
+					printf("%d %s", campos_variaveis_size, prestadora);
+				}
+				printf("\n");
+			}
+			else
+			{
+				fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+			}
 			if(feof(binario) == 0)
 			{
-				codigoINEP = 0;
-				fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
-				if(codigoINEP != -1){
-					fread(data, (sizeof(data) - 1), 1, binario);
-					fread(uf, (sizeof(uf) - 1), 1, binario);
-					fread(&campos_variaveis_size, sizeof(int), 1, binario);
-					reg_size = reg_size + campos_variaveis_size;
-					fread(escola, campos_variaveis_size, 1, binario);
-					fread(&campos_variaveis_size, sizeof(int), 1, binario);
-					reg_size = reg_size + campos_variaveis_size;
-					fread(cidade, campos_variaveis_size, 1, binario);
-					fread(&campos_variaveis_size, sizeof(int), 1, binario);
-					reg_size = reg_size + campos_variaveis_size;
-					fread(prestadora, campos_variaveis_size, 1, binario);
-
-					printf("%d ", codigoINEP);
-					printf("%s ", data);
-					printf("%s ", uf);
-					printf("%d %s %d %s %d %s\n", strlen(escola), escola, strlen(cidade), cidade, strlen(prestadora), prestadora);
-
-					if(feof(binario) == 0)
-					{
-						if (reg_size < IN_DISK_REG_SIZE) {
-							fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
-						}
-					}
-					else
-					{
-						break;
-					}
-					reg_size = 28;
-				else{
-					fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+				if (reg_size < IN_DISK_REG_SIZE) {
+					fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
 				}
 			}
 			else
 			{
 				break;
 			}
+			reg_size = 28;
 		}
 		rewind(binario);
 		binario_h.status = '1';
@@ -321,7 +335,7 @@ void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, c
 	char status = '0', bytePadding = '0';
 	FILE *binario = NULL;
 	int campos_variaveis_size, isRemoved, regSize;
-	
+
 	binario = fopen(nome_arq_binario, "w+b");
 	if(binario != NULL){
 		fwrite(&status, sizeof(status), 1, binario);
